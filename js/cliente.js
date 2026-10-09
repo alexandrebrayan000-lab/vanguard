@@ -279,21 +279,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
-  // Trocar foto
-  document.getElementById("fotoInput")?.addEventListener("change", (e) => {
+  // Trocar foto (via Supabase Storage)
+  document.getElementById("fotoInput")?.addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      usuario.foto = reader.result;
+
+    try {
+      let novaFotoUrl = null;
+      if (typeof uploadFoto === 'function') {
+        novaFotoUrl = await uploadFoto(file, 'perfil');
+      }
+
+      // Se falhar o upload para storage ou storage-helper não estiver ativo, fallback para dataURL
+      if (!novaFotoUrl) {
+        novaFotoUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      usuario.foto = novaFotoUrl;
       localStorage.setItem("logado", JSON.stringify(usuario));
       if (usuario.id) {
         await api.put('usuarios', usuario.id, { foto: usuario.foto }).catch(console.error);
       }
       renderProfile();
       alert("Foto atualizada com sucesso!");
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Erro ao atualizar foto:", err);
+      alert("Erro ao atualizar foto: " + err.message);
+    }
   });
 
   // Feedback

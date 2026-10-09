@@ -45,21 +45,30 @@ function attachImagePicker(inputId, dataInputId, previewId) {
   });
 }
 
-// ── Resolve Data URL da imagem (null = sem nova imagem) ─
-async function resolveImageData(inputId, dataInputId) {
+// ── Resolve URL da imagem no Supabase Storage (ou fallback Data URL) ─
+async function resolveImageData(inputId, dataInputId, pasta = 'geral') {
   const input     = document.getElementById(inputId);
   const dataInput = document.getElementById(dataInputId);
-
-  // Já existe dataURL armazenado (imagem existente ou recém-carregada)
-  if (dataInput?.value) return dataInput.value;
 
   // Usuário selecionou novo arquivo
   const file = input?.files?.[0];
   if (file) {
+    // 1. Tenta upload via Supabase Storage
+    if (typeof uploadFoto === 'function') {
+      const storageUrl = await uploadFoto(file, pasta);
+      if (storageUrl) {
+        if (dataInput) dataInput.value = storageUrl;
+        return storageUrl;
+      }
+    }
+    // 2. Fallback: Data URL se storage não estiver configurado
     const dataUrl = await readImageFile(file);
     if (dataInput) dataInput.value = dataUrl;
     return dataUrl;
   }
+
+  // Já existe URL/dataURL armazenado (imagem existente ou recém-carregada)
+  if (dataInput?.value) return dataInput.value;
 
   // Nenhuma imagem — retorna null para preservar foto existente ao editar
   return null;
@@ -724,7 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const zoom     = Number(document.getElementById('servicoZoom').value || 100);
       const posX     = Number(document.getElementById('servicoPosX').value || 0);
       const posY     = Number(document.getElementById('servicoPosY').value || 0);
-      const fotoResolvida = await resolveImageData('servicoFoto', 'servicoFotoData');
+      const fotoResolvida = await resolveImageData('servicoFoto', 'servicoFotoData', 'servicos');
       
       const payload = { nome, preco, duracao, imageFit, zoom, posX, posY };
       if (fotoResolvida !== null) {
@@ -753,7 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const id           = document.getElementById('barbeiroId').value.trim();
       const nome         = document.getElementById('barbeiroNome').value.trim();
       const especialidade = document.getElementById('barbeiroEspecialidade').value.trim();
-      const fotoResolvida = await resolveImageData('barbeiroFoto', 'barbeiroFotoData');
+      const fotoResolvida = await resolveImageData('barbeiroFoto', 'barbeiroFotoData', 'barbeiros');
 
       const payload = { nome, especialidade };
       if (fotoResolvida !== null) {
@@ -786,7 +795,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const zoom      = Number(document.getElementById('produtoZoom').value || 100);
       const posX      = Number(document.getElementById('produtoPosX').value || 0);
       const posY      = Number(document.getElementById('produtoPosY').value || 0);
-      const fotoResolvida = await resolveImageData('produtoFoto', 'produtoFotoData');
+      const fotoResolvida = await resolveImageData('produtoFoto', 'produtoFotoData', 'produtos');
 
       const payload = { nome, preco, imageFit, zoom, posX, posY };
       if (fotoResolvida !== null) {
@@ -819,7 +828,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const zoom      = Number(document.getElementById('galeriaZoom').value || 100);
       const posX      = Number(document.getElementById('galeriaPosX').value || 0);
       const posY      = Number(document.getElementById('galeriaPosY').value || 0);
-      const fotoResolvida = await resolveImageData('galeriaFoto', 'galeriaFotoData');
+      const fotoResolvida = await resolveImageData('galeriaFoto', 'galeriaFotoData', 'galeria');
 
       const payload = { descricao, imageFit, zoom, posX, posY };
       if (fotoResolvida !== null) {
