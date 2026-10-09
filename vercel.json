@@ -1,0 +1,12 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "routes": [
+    { "src": "/", "dest": "/index.html" },
+    { "src": "/login", "dest": "/login.html" },
+    { "src": "/cadastro", "dest": "/cadastro.html" },
+    { "src": "/dashboard", "dest": "/dashboard.html" },
+    { "src": "/cliente", "dest": "/cliente.html" },
+    { "src": "/admin", "dest": "/admin.html" }
+  ]
+}
